@@ -302,15 +302,52 @@ struct Determin{T<:Real} <: ContinuousUnivariateDistribution
   val::T
 end
 
+struct DeterminVec{T<:Vector} <: MultivariateDistribution
+    val::T
+end
+
 Distributions.rand(rng::AbstractRNG, d::Determin) = d.val
 Distributions.logpdf(d::Determin, x::T) where T<:Real = zero(x)
+
+Distributions.rand(rng::AbstractRNG, d::DeterminVec) = d.val
+Distributions.logpdf(d::DeterminVec, x::T) where T<:Vector = zero(x)
+
+"""
+Define transfer functions for Dirichlet and Sink Process.
+"""
+transferFunctions(process::DirichletAllocation, params) = params
+transferFunctions(process::SinkProcess, params) = nothing
+
+
 
 """
 Build matrices from process params and input distributions
 """
-function buildMatrices(processParams, inputs)
+function buildMatrices(processes, processParams, inputs, possible_inputs; ::Type{TC} = Array{Float64, 2}) where {TC}
     Np = length(processParams)
+
+    # transferCoeffs = TC(undef, Np, Np)
+    transferCoeffs = zeros(TC, Np, Np)
+
+    pids = Dict(sort(string.(keys(processes))) .=> collect(1:length(keys(processes))))
+
+    for (pid, process) in processes
+        if !(haskey(processParams, pid))
+            continue
+        params = processParams[pid]
+        process_tcs = transferFunctions(process, params)
+        if !(isempty(process.outputs))
+            dest_idx = [pids[dest_id] for dest_id in process.outputs]
+            transferCoeffs[dest_idx, pids[pid]] ~ process_tcs
+        end
     
+    end
+
+    possible_inputs_idx = [pids[k] for k in possible_inputs]
+    allInputs = zeros(Np)
+    allInputs[possible_inputs_idx] = inputs
+    return transferCoeffs, allInputs
+end
 
 """
 Define a function that takes in observations, prior related data etc and builds our probabilistic model Turing Style!!
@@ -318,21 +355,24 @@ Define a function that takes in observations, prior related data etc and builds 
 
 @model function MFA(processes, input_defs, param_defs, inputμ, inputσ, inputLB, inputUB; flow_observations=nothing, input_observations=nothing, ratio_observations=nothing, inflow_observations = nothing)
 
+    possible_inputs = sort(string.(keys(input_defs)))
+
     if !isnothing(flow_observations)
-        σ ∼ truncated(Normal(0, 0.15), 0, 0.5)
+        σ ~ truncated(Normal(0, 0.15), 0, 0.5)
     end
 
     if !isnothing(input_observations)
-        σ_input ∼ truncated(Normal(0, 0.15), 0, 0.5)
+        σ_input ~ truncated(Normal(0, 0.15), 0, 0.5)
     end
 
     if !isnothing(ratio_observations)
-        σ_ratio ∼ truncated(Normal(0, 0.15), 0, 0.5)
+        σ_ratio ~ truncated(Normal(0, 0.15), 0, 0.5)
     end
 
 
     # we also want to create distributions for each of the process IDs, using their original names as variable names!
     
+    processParams = Dict()
     for k in keys(processes)
         if string(k) in keys(param_defs)
             defs = param_defs[string(k)]
@@ -342,23 +382,44 @@ Define a function that takes in observations, prior related data etc and builds 
         @assert length(defs) = processes[k].nparams
         if processes[k] isa DirichletAllocation
             if length(defs) > 1
-                @eval $k ~ Dirichlet(defs)
+                # @eval $k ~ Dirichlet(defs)
+                # processParams[k] = @eval $k ~ Dirichlet(defs)
+                processParams[k] ~ Dirichlet(defs)
             else
-                @eval $k ~ Determin(1)
+                # @eval $k ~ Determin(1)
+                # processParams[k] = @eval $k ~ Determin(1)
+                processParams[k] ~ Determin(1)
             end
-        else
+
+        elseif processes[k] isa SinkProcess
             @eval $k ~ nothing
+            # processParams[k] = @eval $k ~ nothing 
+            processParams[k] = nothing
         end
     end
 
     
     inputs = Vector{UnivariateDistribution}(undef, length(input_defs))
     for i in 1:length(input_defs)
-        inputs[i] ∼ truncated(Normal(inputμ[i], inputσ[i], inputLB[i], inputUB[i]))
+        inputs[i] ~ truncated(Normal(inputμ[i], inputσ[i]), inputLB[i], inputUB[i])
     end
 
-    transferCoeffs, allInputs = buildMatrices(processParams, inputs)
+    transferCoeffs, allInputs = buildMatrices(processes, processParams, inputs, possible_inputs)
     
+    # Convert to distributions
+    m, n = size(transferCoeffs)
+    transferCoeffsFinal = zeros(m, n)
+    for mIdx in 1:m
+        for nIdx in 1:n
+            transferCoeffsFinal[mIdx, nIdx] ~ DeterminVec(transferCoeffs[mIdx, nIdx])
+        end
+    end
 
+    process_throughputs ~ DeterminVec((I - transferCoeffsFinal) \ allInputs)
 
+    flows ~ DeterminVec(transferCoeffsFinal' * process_throughputs)
+
+    # add in observations and return final posterior variables.
+
+end
 
