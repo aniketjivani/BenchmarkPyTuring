@@ -113,16 +113,16 @@ allProcessDescription = Dict(
 # allProcessesString = string.(allProcessesFinal)
 # println(allProcessesFinal)
 
-input_observations = (
-    Import_DRI = 2.47,
-    Import_Iron_Ore =             5.16,
-    Import_Pig_Iron =             4.27,
-    Import_Scrap =                3.72,
-    Ingot_Import =                6.94,
-    Intermediate_Product_Import = 23.46,
-    Iron_Ore_Production =          54.7,
-    Purchased_Scrap =             70.98,
-    )
+input_observations = [
+    ("Import_DRI", 2.47),
+    ("Import_Iron_Ore", 5.16),
+    ("Import_Pig_Iron", 4.27),
+    ("Import_Scrap", 3.72),
+    ("Ingot_Import", 6.94),
+    ("Intermediate_Product_Import", 23.46),
+    ("Iron_Ore_Production", 54.7),
+    ("Purchased_Scrap", 70.98)
+]
 
 inputDefs = Dict(
     "Import_DRI" => 2.47,
@@ -166,7 +166,6 @@ end
 paramDefs = Dict(
     "Iron_Ore_Production"=> dirPrior(([1.39, 6.82])/sum(([1.39, 6.82]))*100; with_stddev = [0, 12]),
     "Iron_Ore_Consumption"=> dirPrior(([17.25, 1.73, 0.60])/sum(([17.25, 1.73, 0.60]))*100; with_stddev = [0, 7]),
-
     "DRI_Production"      => dirPrior(([0.41, 1.73])/sum(([0.41, 1.73]))*100; with_stddev = [0, 22]),
     "DRI"                 => dirPrior(([0.17, 0.73])/sum(([0.17, 0.73]))*100; with_stddev = [0, 28] ),
     "DRI_Consumption"     => dirPrior(([1.6, 1.09, 21.47, 0.1, 0.77])/sum(([1.6, 1.09, 21.47, 0.1, 0.77]))*100; with_stddev=[0, 5]),
@@ -198,97 +197,97 @@ paramDefs = Dict(
 
             
 observationsRatio = [
-    (["Cold_Rolled_Sheet"], ["Automotive"],        0.250),  
-    (["Cold_Rolled_Sheet"], ["Machinery"],         0.079),  
-    (["Cold_Rolled_Sheet"], ["Steel_Products"],    0.313), 
-    (["Cold_Rolled_Sheet"], ["Export"],            0.112), 
-    (["Galvanized_Sheet"],  ["Construction"],      0.19),  
-    (["Galvanized_Sheet"],  ["Automotive"],        0.42), 
-    (["Galvanized_Sheet"],  ["Export"],            0.15),  
-    (["Hot_Rolled_Sheet"],  ["Construction"],      0.59 ),  
-    (["Hot_Rolled_Sheet"],  ["Automotive"],        0.133 ), 
-    (["Hot_Rolled_Sheet"],  ["Machinery"],         0.108 ),  
-    (["Hot_Rolled_Sheet"],  ["Energy"],            0.01  ), 
-    (["Hot_Rolled_Sheet"],  ["Steel_Products"],    0.0027), 
-    (["Hot_Rolled_Sheet"],  ["Export"],            0.065),
-    (["Pipe_and_Tubing"],   ["Construction"],       0.227), 
-    (["Pipe_and_Tubing"],   ["Automotive"],         0.08), 
-    (["Pipe_and_Tubing"],   ["Machinery"],          0.04),  
-    (["Pipe_and_Tubing"],   ["Energy"],             0.55), 
-    (["Pipe_and_Tubing"],   ["Export"],             0.065),
-    (["Plates"],            ["Construction"],       0.0408), 
-    (["Plates"],            ["Automotive"],         0.01), 
-    (["Plates"],            ["Machinery"],          0.5187),  
-    (["Plates"],            ["Energy"],             0.067), 
-    (["Plates"],            ["Export"],             0.231),
-    (["Bars"],              ["Construction"],       0.152), 
-    (["Bars"],              ["Automotive"],         0.311), 
-    (["Bars"],              ["Machinery"],          0.238),  
-    (["Bars"],              ["Energy"],             0.046), 
-    (["Bars"],              ["Export"],             0.131),
-    (["Reinforcing_Bars"],  ["Construction"],       0.925),
-    (["Reinforcing_Bars"],  ["Export"],             0.039),
-    (["Tin_Mill_Products"], ["Automotive"],         0.006),
-    (["Tin_Mill_Products"], ["Steel_Products"],     0.685),
-    (["Tin_Mill_Products"], ["Export"],             0.067),
-    (["Wire_and_Wire_Rods"],  ["Construction"],     0.388), 
-    (["Wire_and_Wire_Rods"],  ["Automotive"],       0.285), 
-    (["Wire_and_Wire_Rods"],  ["Machinery"],        0.1),  
-    (["Wire_and_Wire_Rods"],  ["Energy"],           0.049), 
-    (["Wire_and_Wire_Rods"],  ["Export"],           0.094),
-    (["Rails_and_Rail_Accessories"],  ["Construction"],  0.779), 
-    (["Rails_and_Rail_Accessories"],  ["Machinery"],     0.047), 
-    (["Rails_and_Rail_Accessories"],  ["Export"],        0.141),
-    (["Light_Section"],          ["Construction"],   0.86),
-    (["Light_Section"],          ["Automotive"],     0.026),
-    (["Light_Section"],          ["Export"],         0.057),
-    (["Heavy_Section"],          ["Construction"],   0.877),
-    (["Heavy_Section"],          ["Export"],         0.092),
-    (["Steel_Product_Casting"],  ["Construction"],   0.259), 
-    (["Steel_Product_Casting"],  ["Automotive"],     0.385), 
-    (["Steel_Product_Casting"],  ["Machinery"],      0.259),
-    (["Iron_Product_Casting"],   ["Construction"],   0.311), 
-    (["Iron_Product_Casting"],   ["Automotive"],     0.552), 
-    (["Iron_Product_Casting"],   ["Machinery"],      0.066),
+    ("Cold_Rolled_Sheet", "Automotive",        0.250),  
+    ("Cold_Rolled_Sheet", "Machinery",         0.079),  
+    ("Cold_Rolled_Sheet", "Steel_Products",    0.313), 
+    ("Cold_Rolled_Sheet", "Export",            0.112), 
+    ("Galvanized_Sheet",  "Construction",      0.19),  
+    ("Galvanized_Sheet", "Automotive",        0.42), 
+    ("Galvanized_Sheet", "Export",            0.15),  
+    ("Hot_Rolled_Sheet", "Construction",      0.59 ),  
+    ("Hot_Rolled_Sheet", "Automotive",        0.133 ), 
+    ("Hot_Rolled_Sheet", "Machinery",         0.108 ),  
+    ("Hot_Rolled_Sheet", "Energy",            0.01  ), 
+    ("Hot_Rolled_Sheet", "Steel_Products",    0.0027), 
+    ("Hot_Rolled_Sheet", "Export",            0.065),
+    ("Pipe_and_Tubing",  "Construction",       0.227), 
+    ("Pipe_and_Tubing",  "Automotive",         0.08), 
+    ("Pipe_and_Tubing",  "Machinery",          0.04),  
+    ("Pipe_and_Tubing",  "Energy",             0.55), 
+    ("Pipe_and_Tubing",  "Export",             0.065),
+    ("Plates",           "Construction",       0.0408), 
+    ("Plates",           "Automotive",         0.01), 
+    ("Plates",           "Machinery",          0.5187),  
+    ("Plates",           "Energy",             0.067), 
+    ("Plates",           "Export",             0.231),
+    ("Bars",             "Construction",       0.152), 
+    ("Bars",             "Automotive",         0.311), 
+    ("Bars",             "Machinery",          0.238),  
+    ("Bars",             "Energy",             0.046), 
+    ("Bars",             "Export",             0.131),
+    ("Reinforcing_Bars", "Construction",       0.925),
+    ("Reinforcing_Bars", "Export",             0.039),
+    ("Tin_Mill_Products", "Automotive",         0.006),
+    ("Tin_Mill_Products", "Steel_Products",     0.685),
+    ("Tin_Mill_Products", "Export",             0.067),
+    ("Wire_and_Wire_Rods",  "Construction",     0.388), 
+    ("Wire_and_Wire_Rods",  "Automotive",       0.285), 
+    ("Wire_and_Wire_Rods",  "Machinery",        0.1),  
+    ("Wire_and_Wire_Rods",  "Energy",           0.049), 
+    ("Wire_and_Wire_Rods",  "Export",           0.094),
+    ("Rails_and_Rail_Accessories",  "Construction",  0.779), 
+    ("Rails_and_Rail_Accessories",  "Machinery",     0.047), 
+    ("Rails_and_Rail_Accessories",  "Export",        0.141),
+    ("Light_Section",          "Construction",   0.86),
+    ("Light_Section",          "Automotive",     0.026),
+    ("Light_Section",          "Export",         0.057),
+    ("Heavy_Section",          "Construction",   0.877),
+    ("Heavy_Section",          "Export",         0.092),
+    ("Steel_Product_Casting",  "Construction",   0.259), 
+    ("Steel_Product_Casting",  "Automotive",     0.385), 
+    ("Steel_Product_Casting",  "Machinery",      0.259),
+    ("Iron_Product_Casting",   "Construction",   0.311), 
+    ("Iron_Product_Casting",   "Automotive",     0.552), 
+    ("Iron_Product_Casting",   "Machinery",      0.066),
 ]
 
 
 observations = [
-    (["Iron_Ore_Production"],       ["Export"],               11.2 ),  
-    (["Iron_Ore_Consumption"],      ["Blast_Furnace"],        46.3), 
-    (["Blast_Furnace"],             ["Pig_Iron"],             32.1), 
-    (["DRI"],                       ["Export"],               0.01),  
-    (["DRI_Consumption"],           ["Blast_Furnace"],        0.049), 
-    (["DRI_Consumption"],           ["Basic_Oxygen_Furnace"], 1.91), 
-    (["DRI_Consumption"],           ["Electric_Arc_Furnace"], 1.62), 
-    (["DRI_Consumption"],           ["Cupola"],               0.01 ), 
-    (["DRI_Consumption"],           ["Other_Casting"],        0.01 ),
-    (["Pig_Iron"],                  ["Export"],               0.021),  
-    (["Pig_Iron_Consumption"],      ["Basic_Oxygen_Furnace"], 31.5), 
-    (["Pig_Iron_Consumption"],      ["Electric_Arc_Furnace"], 5.79), 
-    (["Pig_Iron_Consumption"],      ["Cupola"],               0.057), 
-    (["Pig_Iron_Consumption"],      ["Other_Casting"],        0.046),
-    (["Scrap_Collected"],           ["Export"],               21.4 ), 
-    (["Scrap_Consumption"],         ["Blast_Furnace"],        2.62 ),          
-    (["Scrap_Consumption"],         ["Basic_Oxygen_Furnace"], 8.35 ) ,  
-    (["Scrap_Consumption"],         ["Electric_Arc_Furnace"], 50.9) ,      
-    (["Scrap_Consumption"],         ["Cupola"],               1.11 ),                    
-    (["Scrap_Consumption"],         ["Other_Casting"],        0.167),
-    (["Basic_Oxygen_Furnace"],      ["Continuous_Casting"],   36.281),        
-    (["Electric_Arc_Furnace"],      ["EAF_Yield"],            52.414),        
-    (["Pipe_Welding_Plant"],        ["Pipe_and_Tubing"],      2.165),                   
-    (["Seamless_Tube_Plant"],       ["Pipe_and_Tubing"],      2.162),
-    (["HSM_Yield"],                 ["Hot_Rolled_Sheet"],      19.544),    
-    (["CRM_Yield"],                 ["Cold_Rolled_Sheet"],     11.079),    
-    (["Tin_Mill"],                  ["Tin_Mill_Products"],     2.009),
-    (["Galvanized_Plant"],          ["Galvanized_Sheet"],      16.749),
-    (["Plate_Mill"],                ["Plates"],                 9.12),
-    (["RBM_Yield"],                 ["Reinforcing_Bars"],           5.65),
-    (["RBM_Yield"],                 ["Bars"],                       6.7),
-    (["RBM_Yield"],                 ["Wire_and_Wire_Rods"],         2.784),
-    (["RBM_Yield"],                 ["Light_Section"],              2.13 ),   
-    (["SM_Yield"],                  ["Heavy_Section"],              5.03),   
-    (["SM_Yield"],                  ["Rails_and_Rail_Accessories"], 1.009),
+    ("Iron_Ore_Production",       "Export",               11.2 ),  
+    ("Iron_Ore_Consumption",      "Blast_Furnace",        46.3), 
+    ("Blast_Furnace",             "Pig_Iron",             32.1), 
+    ("DRI",                       "Export",               0.01),  
+    ("DRI_Consumption",           "Blast_Furnace",        0.049), 
+    ("DRI_Consumption",           "Basic_Oxygen_Furnace", 1.91), 
+    ("DRI_Consumption",           "Electric_Arc_Furnace", 1.62), 
+    ("DRI_Consumption",           "Cupola",               0.01 ), 
+    ("DRI_Consumption",           "Other_Casting",        0.01 ),
+    ("Pig_Iron",                  "Export",               0.021),  
+    ("Pig_Iron_Consumption",      "Basic_Oxygen_Furnace", 31.5), 
+    ("Pig_Iron_Consumption",      "Electric_Arc_Furnace", 5.79), 
+    ("Pig_Iron_Consumption",      "Cupola",               0.057), 
+    ("Pig_Iron_Consumption",      "Other_Casting",        0.046),
+    ("Scrap_Collected",           "Export",               21.4 ), 
+    ("Scrap_Consumption",         "Blast_Furnace",        2.62 ),          
+    ("Scrap_Consumption",         "Basic_Oxygen_Furnace", 8.35 ) ,  
+    ("Scrap_Consumption",         "Electric_Arc_Furnace", 50.9) ,      
+    ("Scrap_Consumption",         "Cupola",               1.11 ),                    
+    ("Scrap_Consumption",         "Other_Casting",        0.167),
+    ("Basic_Oxygen_Furnace",      "Continuous_Casting",   36.281),        
+    ("Electric_Arc_Furnace",      "EAF_Yield",            52.414),        
+    ("Pipe_Welding_Plant",        "Pipe_and_Tubing",      2.165),                   
+    ("Seamless_Tube_Plant",       "Pipe_and_Tubing",      2.162),
+    ("HSM_Yield",                 "Hot_Rolled_Sheet",      19.544),    
+    ("CRM_Yield",                 "Cold_Rolled_Sheet",     11.079),    
+    ("Tin_Mill",                  "Tin_Mill_Products",     2.009),
+    ("Galvanized_Plant",          "Galvanized_Sheet",      16.749),
+    ("Plate_Mill",                "Plates",                 9.12),
+    ("RBM_Yield",                 "Reinforcing_Bars",           5.65),
+    ("RBM_Yield",                 "Bars",                       6.7),
+    ("RBM_Yield",                 "Wire_and_Wire_Rods",         2.784),
+    ("RBM_Yield",                 "Light_Section",              2.13 ),   
+    ("SM_Yield",                  "Heavy_Section",              5.03),   
+    ("SM_Yield",                  "Rails_and_Rail_Accessories", 1.009),
 ]
 
 
@@ -302,7 +301,7 @@ struct Determin{T<:Real} <: ContinuousUnivariateDistribution
   val::T
 end
 
-struct DeterminVec{T<:Vector} <: MultivariateDistribution
+struct DeterminVec{T<:AbstractArray} <: MultivariateDistribution
     val::T
 end
 
@@ -310,7 +309,7 @@ Distributions.rand(rng::AbstractRNG, d::Determin) = d.val
 Distributions.logpdf(d::Determin, x::T) where T<:Real = zero(x)
 
 Distributions.rand(rng::AbstractRNG, d::DeterminVec) = d.val
-Distributions.logpdf(d::DeterminVec, x::T) where T<:Vector = zero(x)
+Distributions.logpdf(d::DeterminVec, x::T) where T<:AbstractArray = zero(x)
 
 """
 Define transfer functions for Dirichlet and Sink Process.
@@ -350,9 +349,51 @@ function buildMatrices(processes, processParams, inputs, possible_inputs; ::Type
 end
 
 """
+Build flow observation variables
+"""
+function buildFlowObservations(processes, flowObservations; ::Type{TC} = Array{Float64, 2}) where {TC}
+    Np = length(processes)
+    No = length(flowObservations)
+    flow_obs = zeros(TC, No, Np, Np)
+    flow_data = zeros(TC, No)
+
+    pids = Dict(sort(string.(keys(processes))) .=> collect(1:length(keys(processes))))
+
+    for (i, obs) in enumerate(flowObservations)
+        sources = obs[1]
+        targets = obs[2]
+        value = obs[3]
+        flow_obs[i, [pids[k] for k in sources], [pids[k] for k in targets]] .= 1
+        flow_data[i] = value
+    end
+
+    return flow_obs, flow_data
+end
+
+"""
+Build input observation variables
+"""
+function buildInputObservations(processes, inputObservations; ::Type{TC} = Array{Float64, 2}) where {TC}
+    Np = length(processes)
+    No = length(inputObservations)
+    input_obs = zeros(TC, No, Np)
+    input_data = zeros(TC, No)
+
+    pids = Dict(sort(string.(keys(processes))) .=> collect(1:length(keys(processes))))
+
+    for (i, obs) in enumerate(inputObservations)
+        targets = obs[1]
+        value = obs[2]
+        input_obs[i, [pids[k] for k in targets]] .= 1
+        input_data[i] = value
+    end
+
+    return input_obs, input_data
+end
+
+"""
 Define a function that takes in observations, prior related data etc and builds our probabilistic model Turing Style!!
 """
-
 @model function MFA(processes, input_defs, param_defs, inputμ, inputσ, inputLB, inputUB; flow_observations=nothing, input_observations=nothing, ratio_observations=nothing, inflow_observations = nothing)
 
     possible_inputs = sort(string.(keys(input_defs)))
@@ -417,9 +458,58 @@ Define a function that takes in observations, prior related data etc and builds 
 
     process_throughputs ~ DeterminVec((I - transferCoeffsFinal) \ allInputs)
 
-    flows ~ DeterminVec(transferCoeffsFinal' * process_throughputs)
+    flows ~ DeterminVec(transferCoeffsFinal' .* process_throughputs)
 
     # add in observations and return final posterior variables.
+    if !isnothing(flow_observations)
+        flow_obs, flow_data = buildFlowObservations(processes, flow_observations)
+        sumFlowTensorDot = zeros(size(flow_obs, 1))
+        for i = 1:size(flow_obs, 3)
+            sumFlowTensorDot += flow_obs[:, :, i] * flows[:, i]
+        end
+        Fobs ~ DeterminVec(sumFlowTensorDot) 
+        FD ~ MvNormal(Fobs, σ * Fobs)
+    end
 
+    if !isnothing(input_observations)
+        input_obs, input_data = buildInputObservations(processes, input_observations)
+        Iobs ~ DeterminVec(input_obs * allInputs)
+        ID ~ MvNormal(Iobs, σ_input * Iobs)
+    end
+
+    if !isnothing(ratio_observations)
+        ratio_obs, ratio_data = buildFlowObservations(processes, ratio_observations)
+        sumObsTensorDot = zeros(size(ratio_obs, 1))
+        for i = 1:size(ratio_obs, 3)
+            sumObsTensorDot += ratio_obs[:, :, i] * transferCoeffs'[:, i]
+        end
+        Robs ~ DeterminVec(sumObsTensorDot)
+        RD ~ MvNormal(Robs, σ_ratio * Robs)
+    end
+    
 end
+
+# https://discourse.julialang.org/t/pymc-models-to-turing-jl/51574/5
+# Follow this example properly then come back to this to reflect => Definitely code could be
+# more compact and follow appropriate syntax and notation.
+
+# np.tensordot(axes=2)
+# >>> a3d = np.array([[[1, -3, 1],
+# ... [5, 0, 2],
+# ... [9, 1, -3]],
+# ... [[2, 2, 4],
+# ... [6, 1, 0],
+# ... [10, -1, 2]],
+# ... [[3, 4, 9],
+# ... [7, 3, -3],
+# ... [11, 2, 1]],
+# ... [[4, 1, 1],
+# ... [8, 6, 0],
+# ... [12, 3, 2]]
+# ... ]
+# ... ) Note that this is of shape 4, 3, 3 (index some row or column and check - it doesn't correspond to intuition for building row wise)
+# b2d = np.array([[2, -1, 2], [4, 0, 1], [3, 4, -3]])
+# np.tensordot(a3d, b2d, 2) 
+# array([69, 54, 83, 83])
+
 
