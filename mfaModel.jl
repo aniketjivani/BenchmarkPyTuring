@@ -301,7 +301,7 @@ struct Determin{T<:Real} <: ContinuousUnivariateDistribution
   val::T
 end
 
-struct DeterminVec{T<:AbstractArray} <: MultivariateDistribution
+struct DeterminVec{T<:AbstractArray} <: ContinuousMultivariateDistribution
     val::T
 end
 
@@ -322,17 +322,19 @@ transferFunctions(process::SinkProcess, params) = nothing
 """
 Build matrices from process params and input distributions
 """
-function buildMatrices(processes, processParams, inputs, possible_inputs; ::Type{TC} = Array{Float64, 2}) where {TC}
+# function buildMatrices(processes, processParams, inputs, possible_inputs, ::Type{TC} = Array{Float64, 2}) where TC
+function buildMatrices(processes, processParams, inputs, possible_inputs)
+
     Np = length(processParams)
 
-    # transferCoeffs = TC(undef, Np, Np)
-    transferCoeffs = zeros(TC, Np, Np)
+    transferCoeffs = zeros(Np, Np)
 
     pids = Dict(sort(string.(keys(processes))) .=> collect(1:length(keys(processes))))
 
     for (pid, process) in processes
         if !(haskey(processParams, pid))
             continue
+        end
         params = processParams[pid]
         process_tcs = transferFunctions(process, params)
         if !(isempty(process.outputs))
@@ -351,11 +353,15 @@ end
 """
 Build flow observation variables
 """
-function buildFlowObservations(processes, flowObservations; ::Type{TC} = Array{Float64, 2}) where {TC}
+# function buildFlowObservations(processes, flowObservations; ::Type{TC} = Array{Float64, 2}) where {TC}
+function buildFlowObservations(processes, flowObservations)
     Np = length(processes)
     No = length(flowObservations)
-    flow_obs = zeros(TC, No, Np, Np)
-    flow_data = zeros(TC, No)
+    # flow_obs = zeros(TC, No, Np, Np)
+    # flow_data = zeros(TC, No)
+
+    flow_obs = zeros(No, Np, Np)
+    flow_data = zeros(No)
 
     pids = Dict(sort(string.(keys(processes))) .=> collect(1:length(keys(processes))))
 
@@ -373,7 +379,8 @@ end
 """
 Build input observation variables
 """
-function buildInputObservations(processes, inputObservations; ::Type{TC} = Array{Float64, 2}) where {TC}
+# function buildInputObservations(processes, inputObservations; ::Type{TC} = Array{Float64, 2}) where {TC}
+function buildInputObservations(processes, inputObservations)
     Np = length(processes)
     No = length(inputObservations)
     input_obs = zeros(TC, No, Np)
@@ -440,7 +447,7 @@ Define a function that takes in observations, prior related data etc and builds 
     end
 
     
-    inputs = Vector{UnivariateDistribution}(undef, length(input_defs))
+    inputs = zeros(length(input_defs))
     for i in 1:length(input_defs)
         inputs[i] ~ truncated(Normal(inputμ[i], inputσ[i]), inputLB[i], inputUB[i])
     end
@@ -453,10 +460,12 @@ Define a function that takes in observations, prior related data etc and builds 
     for mIdx in 1:m
         for nIdx in 1:n
             transferCoeffsFinal[mIdx, nIdx] ~ DeterminVec(transferCoeffs[mIdx, nIdx])
+            # transferCoeffsFinal[mIdx, nIdx] = transferCoeffs[mIdx, nIdx]
         end
     end
 
     process_throughputs ~ DeterminVec((I - transferCoeffsFinal) \ allInputs)
+    # process_throughputs = (I - transferCoeffsFinal) \ allInputs
 
     flows ~ DeterminVec(transferCoeffsFinal' .* process_throughputs)
 
