@@ -1,3 +1,5 @@
+# https://luiarthur.github.io/TuringBnpBenchmarks/dpsbgmm
+
 using Turing
 using Random
 
@@ -297,11 +299,11 @@ input_sigma = [1.48,  1.27 ,  1.7,  1.75,  3.94,   10,   9.69,   7.49]
 input_lower = [0,     2,      2.5,  2,     0,      10,   20,     50 ]
 input_upper = [5,     7,      7,    6,     20,     45,   70,     90]    
 
-struct Determin{T<:Real} <: ContinuousUnivariateDistribution
+mutable struct Determin{T<:Real} <: ContinuousUnivariateDistribution
   val::T
 end
 
-struct DeterminVec{T<:AbstractArray} <: ContinuousMultivariateDistribution
+mutable struct DeterminVec{T<:AbstractArray} <: ContinuousMultivariateDistribution
     val::T
 end
 
@@ -310,6 +312,9 @@ Distributions.logpdf(d::Determin, x::T) where T<:Real = zero(x)
 
 Distributions.rand(rng::AbstractRNG, d::DeterminVec) = d.val
 Distributions.logpdf(d::DeterminVec, x::T) where T<:AbstractArray = zero(x)
+
+# Base.size(d::DeterminVec) = length(d.val)
+# Turing.reconstruct(d::DeterminVec, x::Vector{Float64}) = Turing.reconstruct(size(d), x)
 
 """
 Define transfer functions for Dirichlet and Sink Process.
@@ -401,124 +406,103 @@ end
 """
 Define a function that takes in observations, prior related data etc and builds our probabilistic model Turing Style!!
 """
-@model function MFA(processes, input_defs, param_defs, inputμ, inputσ, inputLB, inputUB; flow_observations=nothing, input_observations=nothing, ratio_observations=nothing, inflow_observations = nothing)
+function MFA(processes, input_defs, param_defs, inputμ, inputσ, inputLB, inputUB; flow_observations=nothing, input_observations=nothing, ratio_observations=nothing, inflow_observations = nothing)
 
     possible_inputs = sort(string.(keys(input_defs)))
 
-    if !isnothing(flow_observations)
-        σ ~ truncated(Normal(0, 0.15), 0, 0.5)
-    end
+    # if !isnothing(flow_observations)
+    #     σ ~ truncated(Normal(0, 0.15), 0, 0.5)
+    # end
 
-    if !isnothing(input_observations)
-        σ_input ~ truncated(Normal(0, 0.15), 0, 0.5)
-    end
+    # if !isnothing(input_observations)
+    #     σ_input ~ truncated(Normal(0, 0.15), 0, 0.5)
+    # end
 
-    if !isnothing(ratio_observations)
-        σ_ratio ~ truncated(Normal(0, 0.15), 0, 0.5)
-    end
+    # if !isnothing(ratio_observations)
+    #     σ_ratio ~ truncated(Normal(0, 0.15), 0, 0.5)
+    # end
 
 
     # we also want to create distributions for each of the process IDs, using their original names as variable names!
     
     processParams = Dict()
-    for k in keys(processes)
+    allDefs = []
+    # processParams = zeros(length(keys(processes)))
+    for (i, k) in enumerate(keys(processes))
         if string(k) in keys(param_defs)
-            defs = param_defs[string(k)]
+            global defs = param_defs[string(k)]
         else
-            defs = ones(processes[k].nparams)
+            global defs = ones(processes[k].nParams)
         end
-        @assert length(defs) = processes[k].nparams
+        push!(allDefs, defs)
+        @assert length(defs) == processes[k].nParams
+        kk = string(k)
         if processes[k] isa DirichletAllocation
+            # if length(defs) > 1
             if length(defs) > 1
-                # @eval $k ~ Dirichlet(defs)
-                # processParams[k] = @eval $k ~ Dirichlet(defs)
-                processParams[k] ~ Dirichlet(defs)
+                # processParams[kk] ~ Dirichlet(defs)
+                # println("Variable allocated")
             else
-                # @eval $k ~ Determin(1)
-                # processParams[k] = @eval $k ~ Determin(1)
-                processParams[k] ~ Determin(1)
+                # processParams[kk] ~ Determin(1)
+                # processParams[kk] ~ Normal(0, 1)
+                # println("Determin Variable allocated")
             end
 
         elseif processes[k] isa SinkProcess
-            @eval $k ~ nothing
-            # processParams[k] = @eval $k ~ nothing 
-            processParams[k] = nothing
+            # # processParams[k] = @eval $k ~ nothing 
+            # processParams[kk] = nothing
+            # println("No variable allocated")
         end
     end
 
     
-    inputs = zeros(length(input_defs))
-    for i in 1:length(input_defs)
-        inputs[i] ~ truncated(Normal(inputμ[i], inputσ[i]), inputLB[i], inputUB[i])
-    end
+    # inputs = zeros(length(input_defs))
+    # for i in 1:length(input_defs)
+    #     inputs[i] ~ truncated(Normal(inputμ[i], inputσ[i]), inputLB[i], inputUB[i])
+    # end
 
-    transferCoeffs, allInputs = buildMatrices(processes, processParams, inputs, possible_inputs)
+    # transferCoeffs, allInputs = buildMatrices(processes, processParams, inputs, possible_inputs)
     
-    # Convert to distributions
-    m, n = size(transferCoeffs)
-    transferCoeffsFinal = zeros(m, n)
-    for mIdx in 1:m
-        for nIdx in 1:n
-            transferCoeffsFinal[mIdx, nIdx] ~ DeterminVec(transferCoeffs[mIdx, nIdx])
-            # transferCoeffsFinal[mIdx, nIdx] = transferCoeffs[mIdx, nIdx]
-        end
-    end
+    # # Convert to distributions
+    # m, n = size(transferCoeffs)
+    # transferCoeffsFinal = zeros(m, n)
+    # for mIdx in 1:m
+    #     for nIdx in 1:n
+    #         transferCoeffsFinal[mIdx, nIdx] ~ DeterminVec(transferCoeffs[mIdx, nIdx])
+    #         # transferCoeffsFinal[mIdx, nIdx] = transferCoeffs[mIdx, nIdx]
+    #     end
+    # end
 
-    process_throughputs ~ DeterminVec((I - transferCoeffsFinal) \ allInputs)
-    # process_throughputs = (I - transferCoeffsFinal) \ allInputs
+    # process_throughputs ~ DeterminVec((I - transferCoeffsFinal) \ allInputs)
+    # # process_throughputs = (I - transferCoeffsFinal) \ allInputs
 
-    flows ~ DeterminVec(transferCoeffsFinal' .* process_throughputs)
+    # flows ~ DeterminVec(transferCoeffsFinal' .* process_throughputs)
 
-    # add in observations and return final posterior variables.
-    if !isnothing(flow_observations)
-        flow_obs, flow_data = buildFlowObservations(processes, flow_observations)
-        sumFlowTensorDot = zeros(size(flow_obs, 1))
-        for i = 1:size(flow_obs, 3)
-            sumFlowTensorDot += flow_obs[:, :, i] * flows[:, i]
-        end
-        Fobs ~ DeterminVec(sumFlowTensorDot) 
-        FD ~ MvNormal(Fobs, σ * Fobs)
-    end
+    # # add in observations and return final posterior variables.
+    # if !isnothing(flow_observations)
+    #     flow_obs, flow_data = buildFlowObservations(processes, flow_observations)
+    #     sumFlowTensorDot = zeros(size(flow_obs, 1))
+    #     for i = 1:size(flow_obs, 3)
+    #         sumFlowTensorDot += flow_obs[:, :, i] * flows[:, i]
+    #     end
+    #     Fobs ~ DeterminVec(sumFlowTensorDot) 
+    #     FD ~ MvNormal(Fobs, σ * Fobs)
+    # end
 
-    if !isnothing(input_observations)
-        input_obs, input_data = buildInputObservations(processes, input_observations)
-        Iobs ~ DeterminVec(input_obs * allInputs)
-        ID ~ MvNormal(Iobs, σ_input * Iobs)
-    end
+    # if !isnothing(input_observations)
+    #     input_obs, input_data = buildInputObservations(processes, input_observations)
+    #     Iobs ~ DeterminVec(input_obs * allInputs)
+    #     ID ~ MvNormal(Iobs, σ_input * Iobs)
+    # end
 
-    if !isnothing(ratio_observations)
-        ratio_obs, ratio_data = buildFlowObservations(processes, ratio_observations)
-        sumObsTensorDot = zeros(size(ratio_obs, 1))
-        for i = 1:size(ratio_obs, 3)
-            sumObsTensorDot += ratio_obs[:, :, i] * transferCoeffs'[:, i]
-        end
-        Robs ~ DeterminVec(sumObsTensorDot)
-        RD ~ MvNormal(Robs, σ_ratio * Robs)
-    end
-    
+    # if !isnothing(ratio_observations)
+    #     ratio_obs, ratio_data = buildFlowObservations(processes, ratio_observations)
+    #     sumObsTensorDot = zeros(size(ratio_obs, 1))
+    #     for i = 1:size(ratio_obs, 3)
+    #         sumObsTensorDot += ratio_obs[:, :, i] * transferCoeffs'[:, i]
+    #     end
+    #     Robs ~ DeterminVec(sumObsTensorDot)
+    #     RD ~ MvNormal(Robs, σ_ratio * Robs)
+    # end
+    return allDefs
 end
-
-# https://discourse.julialang.org/t/pymc-models-to-turing-jl/51574/5
-# Follow this example properly then come back to this to reflect => Definitely code could be
-# more compact and follow appropriate syntax and notation.
-
-# np.tensordot(axes=2)
-# >>> a3d = np.array([[[1, -3, 1],
-# ... [5, 0, 2],
-# ... [9, 1, -3]],
-# ... [[2, 2, 4],
-# ... [6, 1, 0],
-# ... [10, -1, 2]],
-# ... [[3, 4, 9],
-# ... [7, 3, -3],
-# ... [11, 2, 1]],
-# ... [[4, 1, 1],
-# ... [8, 6, 0],
-# ... [12, 3, 2]]
-# ... ]
-# ... ) Note that this is of shape 4, 3, 3 (index some row or column and check - it doesn't correspond to intuition for building row wise)
-# b2d = np.array([[2, -1, 2], [4, 0, 1], [3, 4, -3]])
-# np.tensordot(a3d, b2d, 2) 
-# array([69, 54, 83, 83])
-
-
