@@ -406,21 +406,21 @@ end
 """
 Define a function that takes in observations, prior related data etc and builds our probabilistic model Turing Style!!
 """
-function MFA(processes, input_defs, param_defs, inputμ, inputσ, inputLB, inputUB; flow_observations=nothing, input_observations=nothing, ratio_observations=nothing, inflow_observations = nothing)
+@model function MFA(processes, input_defs, param_defs, inputμ, inputσ, inputLB, inputUB; flow_observations=nothing, input_observations=nothing, ratio_observations=nothing, inflow_observations = nothing)
 
     possible_inputs = sort(string.(keys(input_defs)))
 
-    # if !isnothing(flow_observations)
-    #     σ ~ truncated(Normal(0, 0.15), 0, 0.5)
-    # end
+    if !isnothing(flow_observations)
+        σ ~ truncated(Normal(0, 0.15), 0, 0.5)
+    end
 
-    # if !isnothing(input_observations)
-    #     σ_input ~ truncated(Normal(0, 0.15), 0, 0.5)
-    # end
+    if !isnothing(input_observations)
+        σ_input ~ truncated(Normal(0, 0.15), 0, 0.5)
+    end
 
-    # if !isnothing(ratio_observations)
-    #     σ_ratio ~ truncated(Normal(0, 0.15), 0, 0.5)
-    # end
+    if !isnothing(ratio_observations)
+        σ_ratio ~ truncated(Normal(0, 0.15), 0, 0.5)
+    end
 
 
     # we also want to create distributions for each of the process IDs, using their original names as variable names!
@@ -440,26 +440,28 @@ function MFA(processes, input_defs, param_defs, inputμ, inputσ, inputLB, input
         if processes[k] isa DirichletAllocation
             # if length(defs) > 1
             if length(defs) > 1
-                # processParams[kk] ~ Dirichlet(defs)
+                processParams[kk] ~ Dirichlet(defs)
+                # processParams[kk] ~ MvNormal(defs, 1)
                 # println("Variable allocated")
             else
                 # processParams[kk] ~ Determin(1)
+                processParams[kk] = 1
                 # processParams[kk] ~ Normal(0, 1)
                 # println("Determin Variable allocated")
             end
 
         elseif processes[k] isa SinkProcess
             # # processParams[k] = @eval $k ~ nothing 
-            # processParams[kk] = nothing
+            processParams[kk] = nothing
             # println("No variable allocated")
         end
     end
 
     
-    # inputs = zeros(length(input_defs))
-    # for i in 1:length(input_defs)
-    #     inputs[i] ~ truncated(Normal(inputμ[i], inputσ[i]), inputLB[i], inputUB[i])
-    # end
+    inputs = zeros(length(input_defs))
+    for i in 1:length(input_defs)
+        inputs[i] ~ truncated(Normal(inputμ[i], inputσ[i]), inputLB[i], inputUB[i])
+    end
 
     # transferCoeffs, allInputs = buildMatrices(processes, processParams, inputs, possible_inputs)
     
@@ -504,5 +506,20 @@ function MFA(processes, input_defs, param_defs, inputμ, inputσ, inputLB, input
     #     Robs ~ DeterminVec(sumObsTensorDot)
     #     RD ~ MvNormal(Robs, σ_ratio * Robs)
     # end
-    return allDefs
+    # return allDefs
+end
+
+
+@model function dice_throw(y)
+    #Our prior belief about the probability of each result in a six-sided dice.
+    #p is a vector of length 6 each with probability p that sums up to 1.
+    ppp = Dict()
+
+    ppp["a"] ~ Dirichlet(6, 1)
+    ppp["b"] = nothing
+    ppp["c"] ~ Dirichlet([1.0, 2.0])
+    # ppp["d"] ~ Determin(1)
+
+    #Each outcome of the six-sided dice has a probability p.
+    y ~ filldist(Categorical(ppp["a"]), length(y))
 end
