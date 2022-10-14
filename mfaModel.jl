@@ -424,36 +424,31 @@ Define a function that takes in observations, prior related data etc and builds 
 
 
     # we also want to create distributions for each of the process IDs, using their original names as variable names!
-    
-    processParams = Dict()
+
+    processParams = Dict{String, Union{Vector{Float64}, Float64}}()
     allDefs = []
-    # processParams = zeros(length(keys(processes)))
+    # processParams = zeros(T, length(keys(processes)))
     for (i, k) in enumerate(keys(processes))
         if string(k) in keys(param_defs)
-            global defs = param_defs[string(k)]
+            defs = param_defs[string(k)]
+            push!(allDefs, defs)
         else
-            global defs = ones(processes[k].nParams)
+            defs = ones(processes[k].nParams)
+            push!(allDefs, defs)
         end
-        push!(allDefs, defs)
-        @assert length(defs) == processes[k].nParams
         kk = string(k)
         if processes[k] isa DirichletAllocation
             # if length(defs) > 1
             if length(defs) > 1
                 processParams[kk] ~ Dirichlet(defs)
                 # processParams[kk] ~ MvNormal(defs, 1)
-                # println("Variable allocated")
-            else
-                # processParams[kk] ~ Determin(1)
-                processParams[kk] = 1
                 # processParams[kk] ~ Normal(0, 1)
-                # println("Determin Variable allocated")
+            else
+                processParams[kk] ~ Determin(1.0)
             end
 
-        elseif processes[k] isa SinkProcess
-            # # processParams[k] = @eval $k ~ nothing 
-            processParams[kk] = nothing
-            # println("No variable allocated")
+        # elseif processes[k] isa SinkProcess
+        #     processParams[kk] = nothing
         end
     end
 
@@ -507,19 +502,4 @@ Define a function that takes in observations, prior related data etc and builds 
     #     RD ~ MvNormal(Robs, σ_ratio * Robs)
     # end
     # return allDefs
-end
-
-
-@model function dice_throw(y)
-    #Our prior belief about the probability of each result in a six-sided dice.
-    #p is a vector of length 6 each with probability p that sums up to 1.
-    ppp = Dict()
-
-    ppp["a"] ~ Dirichlet(6, 1)
-    ppp["b"] = nothing
-    ppp["c"] ~ Dirichlet([1.0, 2.0])
-    # ppp["d"] ~ Determin(1)
-
-    #Each outcome of the six-sided dice has a probability p.
-    y ~ filldist(Categorical(ppp["a"]), length(y))
 end
