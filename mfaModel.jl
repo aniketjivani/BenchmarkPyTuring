@@ -331,9 +331,7 @@ Build matrices from process params and input distributions
 function buildMatrices(processes, processParams, inputs, possible_inputs)
 
     Np = length(processParams)
-
     transferCoeffs = zeros(Np, Np)
-
     pids = Dict(sort(string.(keys(processes))) .=> collect(1:length(keys(processes))))
 
     for (pid, process) in processes
@@ -458,7 +456,29 @@ Define a function that takes in observations, prior related data etc and builds 
         inputs[i] ~ truncated(Normal(inputμ[i], inputσ[i]), inputLB[i], inputUB[i])
     end
 
-    # transferCoeffs, allInputs = buildMatrices(processes, processParams, inputs, possible_inputs)
+    # transferCoeffs, allInputs = buildMatrices(processes, processParams, inputs, possible_inputs) # expanded out below
+    Np = length(processParams)
+    transferCoeffs = zeros(Np, Np)
+    pids = Dict(sort(string.(keys(processes))) .=> collect(1:length(keys(processes))))
+
+    for (pid, process) in processes
+        if !(haskey(processParams, pid))
+            continue
+        end
+        params = processParams[pid]
+        process_tcs = transferFunctions(process, params)
+        if !(isempty(process.outputs))
+            dest_idx = [pids[dest_id] for dest_id in process.outputs]
+            transferCoeffs[dest_idx, pids[pid]] ~ process_tcs
+        end
+    
+    end
+
+    possible_inputs_idx = [pids[k] for k in possible_inputs]
+    allInputs = zeros(Np)
+    allInputs[possible_inputs_idx] = inputs
+
+    # now convert transfer coeffs properly into Determin Vecs (very confusing syntax in PyMC - maybe ask Jiayuan to clarify?)
     
     # # Convert to distributions
     # m, n = size(transferCoeffs)
